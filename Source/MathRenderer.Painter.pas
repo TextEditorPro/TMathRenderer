@@ -570,13 +570,19 @@ begin
   DrawGlyphs(ToLogicalX(AX), ToLogicalY(ABaseline));
 end;
 
+function IsVerticalBar(const AText: string): Boolean;
+begin
+  Result := (AText = '|') or (AText = #$2016) or (AText = #$2223) or (AText = #$2225);
+end;
+
 procedure TMathPainter.DrawSymbol(const ABox: TMathSymbolBox; const AX: Double; const ABaseline: Double;
   const AScale: Double);
 var
   LRGB: COLORREF;
 begin
   if ColorToRGB(ABox.Color, LRGB) then
-    DrawText(ABox.Text, ABox.Font, ABox.Advances, AX, ABaseline, AScale, LRGB, if FGrayscaleText then FGrayscaleFonts else FFonts);
+    DrawText(ABox.Text, ABox.Font, ABox.Advances, AX, ABaseline, AScale, LRGB,
+      if FGrayscaleText or IsVerticalBar(ABox.Text) then FGrayscaleFonts else FFonts);
 end;
 
 procedure TMathPainter.DrawSpan(const ABox: TMathSpanBox; const AX: Double; const ABaseline: Double; const AScale: Double);

@@ -151,20 +151,21 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\..\Source\MathRenderer.Types.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.FontMetricsData.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Boxes.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Chemistry.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Builder.pas"/>
         <DCCReference Include="..\..\Source\MathRenderer.FontMetrics.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.SymbolData.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Symbols.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.FontMetricsData.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Fonts.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Options.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Painter.pas"/>
         <DCCReference Include="..\..\Source\MathRenderer.ParseTree.pas"/>
         <DCCReference Include="..\..\Source\MathRenderer.Parser.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Options.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Boxes.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Builder.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Fonts.pas"/>
         <DCCReference Include="..\..\Source\MathRenderer.SvgData.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.Painter.pas"/>
-        <DCCReference Include="..\..\Source\MathRenderer.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.SymbolData.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Symbols.pas"/>
+        <DCCReference Include="..\..\Source\MathRenderer.Types.pas"/>
         <DCCReference Include="Demo.MainForm.pas">
             <Form>MainForm</Form>
         </DCCReference>

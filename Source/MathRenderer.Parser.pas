@@ -47,8 +47,8 @@ type
     Primitive: Boolean;
   end;
 
-  TMathBuiltInMacro = (bmCDots, bmChar, bmDots, bmDotsC, bmDotsO, bmFirstOfTwo, bmIfNextChar, bmNewCommand, bmProvideCommand,
-    bmRenewCommand, bmSecondOfTwo, bmTagLiteral, bmTextOrMath);
+  TMathBuiltInMacro = (bmCDots, bmChar, bmChemistry, bmDots, bmDotsC, bmDotsO, bmFirstOfTwo, bmIfNextChar, bmNewCommand,
+    bmPhysicalUnit, bmProvideCommand, bmRenewCommand, bmSecondOfTwo, bmTagLiteral, bmTextOrMath);
 
   TMathMacroKind = (mkString, mkTokens, mkBuiltIn);
 
@@ -219,7 +219,7 @@ function ParseMathError(const AMessage: string; const APosition: Integer = -1): 
 implementation
 
 uses
-  System.Character, System.Math, System.SyncObjs, System.SysUtils, MathRenderer.Symbols;
+  System.Character, System.Math, System.SyncObjs, System.SysUtils, MathRenderer.Chemistry, MathRenderer.Symbols;
 
 type
   TMathParserDefinitions = class(TObject)
@@ -1124,6 +1124,25 @@ const
     Result := Format('\@char{%d}', [LNumber]);
   end;
 
+  function ArgumentText(const ATokens: TMathTokenArray): string;
+  begin
+    Result := '';
+
+    if Length(ATokens) = 0 then
+      Exit;
+
+    var LExpectedPosition := ATokens[High(ATokens)].Position;
+
+    for var LIndex := High(ATokens) downto 0 do
+    begin
+      if (ATokens[LIndex].Position >= 0) and (ATokens[LIndex].Position > LExpectedPosition) then
+        Result := Result + ' ';
+
+      Result := Result + ATokens[LIndex].Text;
+      LExpectedPosition := ATokens[LIndex].Position + ATokens[LIndex].Text.Length;
+    end;
+  end;
+
 var
   LArgs: TArray<TMathTokenArray>;
   LNext: string;
@@ -1164,6 +1183,10 @@ begin
       end;
     bmChar:
       Result := Expand(ParseCharNumber);
+    bmChemistry:
+      Result := Expand('{' + ChemistryToTeX(ArgumentText(ConsumeArgs(1)[0])) + '}');
+    bmPhysicalUnit:
+      Result := Expand('{' + PhysicalUnitToTeX(ArgumentText(ConsumeArgs(1)[0])) + '}');
     bmNewCommand:
       Result := Expand(NewCommand(False, True, False));
     bmRenewCommand:
@@ -2332,12 +2355,12 @@ begin
     ConsumeSpaces;
     LToken := Fetch;
 
-    if (LToken.Text = '\limits') or (LToken.Text = '\nolimits') then
+    if (LToken.Text = '\limits') or (LToken.Text = '\nolimits') or (LToken.Text = '\displaylimits') then
     begin
       if Assigned(LBase) and (LBase.NodeType = ntOp) then
       begin
-        LBase.Limits := LToken.Text = '\limits';
-        LBase.AlwaysHandleSupSub := True;
+        LBase.Limits := LToken.Text <> '\nolimits';
+        LBase.AlwaysHandleSupSub := LToken.Text <> '\displaylimits';
       end
       else
       if Assigned(LBase) and (LBase.NodeType = ntOperatorName) then
@@ -3995,6 +4018,9 @@ begin
   RegisterMacro('\@ifnextchar', bmIfNextChar);
   RegisterMacro('\@ifstar', '\@ifnextchar *{\@firstoftwo{#1}}');
   RegisterMacro('\TextOrMath', bmTextOrMath);
+  RegisterMacro('\ce', bmChemistry);
+  RegisterMacro('\pu', bmPhysicalUnit);
+  RegisterMacro('\sideset', '\mathop{{\vphantom{#3}}#1#3\nolimits#2}\displaylimits');
   RegisterMacro('\char', bmChar);
   RegisterMacro('\newcommand', bmNewCommand);
   RegisterMacro('\renewcommand', bmRenewCommand);
