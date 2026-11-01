@@ -48,6 +48,7 @@ type
     FColor: TColor;
     FDefaultQualityFonts: TMathFontCache;
     FEquationNumber: Integer;
+    FErrorColor: TColor;
     FFontName: string;
     FFontSize: Integer;
     FImageFormat: TMathImageFormat;
@@ -78,6 +79,7 @@ type
     procedure MacrosChanged(Sender: TObject; const AItem: string; AAction: TCollectionNotification);
     procedure SetBackgroundColor(const AValue: TColor);
     procedure SetColor(const AValue: TColor);
+    procedure SetErrorColor(const AValue: TColor);
     procedure SetFontName(const AValue: string);
     procedure SetFontSize(const AValue: Integer);
     procedure SetImageFormat(const AValue: TMathImageFormat);
@@ -99,6 +101,7 @@ type
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor;
     property Color: TColor read FColor write SetColor;
     property EquationNumber: Integer read FEquationNumber write FEquationNumber;
+    property ErrorColor: TColor read FErrorColor write SetErrorColor;
     property FontName: string read FFontName write SetFontName;
     property FontSize: Integer read FFontSize write SetFontSize;
     property ImageFormat: TMathImageFormat read FImageFormat write SetImageFormat;
@@ -114,6 +117,7 @@ type
   end;
 
 const
+  MATH_DEFAULT_ERROR_COLOR = TColor($000000CC);
   MATH_DEFAULT_SCALE = 1.21;
 
 function EscapeHTML(const AText: string): string;
@@ -127,7 +131,6 @@ uses
 const
   MAX_IMAGE_SIDE = 32767;
   PADDING_EM = 0.08;
-  ERROR_COLOR = '#cc0000';
   MATH_PLACEHOLDER_START = #$E000;
   MATH_PLACEHOLDER_END = #$E001;
 
@@ -157,9 +160,16 @@ begin
   end;
 end;
 
-function ErrorHTML(const ATeX: string; const AMessage: string): string;
+function ColorToCSS(const AColor: TColor): string;
 begin
-  Result := Format('<span style="color:%s" title="%s">%s</span>', [ERROR_COLOR, EscapeHTML(AMessage), EscapeHTML(ATeX)]);
+  var LRGB := ColorToRGB(AColor);
+
+  Result := Format('#%.2x%.2x%.2x', [GetRValue(LRGB), GetGValue(LRGB), GetBValue(LRGB)]).ToLower;
+end;
+
+function ErrorHTML(const ATeX: string; const AMessage: string; const AColor: TColor): string;
+begin
+  Result := Format('<span style="color:%s" title="%s">%s</span>', [ColorToCSS(AColor), EscapeHTML(AMessage), EscapeHTML(ATeX)]);
 end;
 
 function DecodeHTMLEntities(const AText: string): string;
@@ -241,6 +251,7 @@ begin
   FMacros := TDictionary<string, string>.Create;
   FMacros.OnValueNotify := MacrosChanged;
   FBackgroundColor := clWhite;
+  FErrorColor := MATH_DEFAULT_ERROR_COLOR;
   FColor := clBlack;
   FEquationNumber := 1;
   FFontName := 'Segoe UI';
@@ -287,6 +298,15 @@ begin
     Exit;
 
   FBackgroundColor := AValue;
+  ClearCache;
+end;
+
+procedure TMathRenderer.SetErrorColor(const AValue: TColor);
+begin
+  if FErrorColor = AValue then
+    Exit;
+
+  FErrorColor := AValue;
   ClearCache;
 end;
 
@@ -571,7 +591,7 @@ begin
 
   LSettings.DisplayMode := ADisplayMode;
   LSettings.ThrowOnError := FThrowOnError;
-  LSettings.ErrorColor := ERROR_COLOR;
+  LSettings.ErrorColor := ColorToCSS(FErrorColor);
   LSettings.MinRuleThickness := FMinRuleThickness;
   LSettings.MaxSize := FMaxSize;
   LSettings.Macros := FMacros;
@@ -714,12 +734,12 @@ begin
       if FThrowOnError then
         raise;
 
-      Result := ErrorHTML(ATeX, LException.Message);
+      Result := ErrorHTML(ATeX, LException.Message, FErrorColor);
     end;
     on LException: EOutOfResources do
-      Exit(ErrorHTML(ATeX, LException.Message));
+      Exit(ErrorHTML(ATeX, LException.Message, FErrorColor));
     on LException: EOSError do
-      Exit(ErrorHTML(ATeX, LException.Message));
+      Exit(ErrorHTML(ATeX, LException.Message, FErrorColor));
   end;
 
   if FCache.Count >= FMaxCacheCount then
